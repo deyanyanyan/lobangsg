@@ -11,7 +11,7 @@ function App() {
   }, []);
 
   if (!puzzle) {
-    return <h2>Loading today's puzzle…</h2>;
+    return <h2>TEst!!!</h2>;
   }
 
   return (
