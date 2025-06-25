@@ -5,7 +5,6 @@ const { DateTime } = require('luxon');
 const supabase = require('./supabaseClient');
 
 
-// Correct Middleware Setup
 app.use(cors());
 app.use(express.json());
 
@@ -39,7 +38,6 @@ app.get('/api/today', async (req, res) => {
   });
 });
 
-// The verified /api/check route
 app.post('/api/check', async (req, res) => {
   console.log("--- Submission received by /api/check route ---");
   const { selection } = req.body;
@@ -64,7 +62,6 @@ app.post('/api/check', async (req, res) => {
   let isCorrect = false;
   let correctGroup = null;
 
-  // Validate against groups from DB
   const groupLabels = todaysPuzzle.solution;
   const groupList = todaysPuzzle.groups;
 

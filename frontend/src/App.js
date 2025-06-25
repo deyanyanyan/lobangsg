@@ -56,14 +56,48 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [alreadyPlayedToday, setAlreadyPlayedToday] = useState(false);
+  const [countdown, setCountdown] = useState('');
+
 
   useEffect(() => {
-    const savedData = JSON.parse(localStorage.getItem('gridConnectData'));
-    if (savedData) {
-      setScore(savedData.score || 0);
-      setStreak(savedData.streak || 0);
+  const savedData = JSON.parse(localStorage.getItem('gridConnectData'));
+  const today = new Date().toDateString();
+
+  if (savedData) {
+    setScore(savedData.score || 0);
+    setStreak(savedData.streak || 0);
+
+    if (savedData.lastPlayed === today) {
+      setAlreadyPlayedToday(true);
+      return startCountdownTimer(); 
     }
-  }, []);
+  }
+  return undefined;
+}, []);
+
+
+    const startCountdownTimer = () => {
+    const updateCountdown = () => {
+    const now = new Date();
+    const midnightSG = new Date();
+    midnightSG.setHours(24, 0, 0, 0);
+    const diff = midnightSG - now;
+
+    const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
+    const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+    const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
+
+    setCountdown(`${hours}:${minutes}:${seconds}`);
+  };
+
+  updateCountdown();
+  const intervalId = setInterval(updateCountdown, 1000);
+  return () => clearInterval(intervalId);
+};
+
+
+
 
   const saveData = (newScore, newStreak, lastPlayedDate) => {
     const dataToSave = { score: newScore, streak: newStreak, lastPlayed: lastPlayedDate };
@@ -171,6 +205,16 @@ const handleSubmit = async () => {
   const handlePlayAgain = () => setGameState('home');
 
   const renderContent = () => {
+    if (alreadyPlayedToday) {
+  return (
+    <div className="already-played-screen">
+      <h1>Relax ah.</h1>
+      <p>You finish today's puzzle already!</p>
+      <p>Come back in: <strong>{countdown}</strong></p>
+    </div>
+  );
+} 
+
     switch (gameState) {
       case 'instructions':
         return <InstructionsModal onStartGame={handleStartGame} />;
