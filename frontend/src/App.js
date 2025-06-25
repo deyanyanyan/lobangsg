@@ -208,7 +208,7 @@ const handleSubmit = async () => {
     if (alreadyPlayedToday) {
   return (
     <div className="already-played-screen">
-      <h1>Relax ah.</h1>
+      <h1>Relax leh.</h1>
       <p>You finish today's puzzle already!</p>
       <p>Come back in: <strong>{countdown}</strong></p>
     </div>
