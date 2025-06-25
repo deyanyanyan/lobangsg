@@ -189,6 +189,8 @@ const handleSubmit = async () => {
       if (newMistakesLeft === 0) {
         setMessage("Aiyoh, game over lah.");
         setIsGameOver(true);
+        setSolvedGroups(groupLabels);
+        setGridWords([]);
       } else {
         setMessage("Wrong lah.");
       }
