@@ -30,8 +30,8 @@ const InstructionsModal = ({ onStartGame }) => (
 const HomeScreen = ({ onPlay, score, streak }) => (
   <div className="home-screen">
     <GameStats score={score} streak={streak} />
-    <h1>GridConnect</h1>
-    <p className="tagline">Find the connection. Solve the grid.</p>
+    <h1>LobangSG</h1>
+    <p className="tagline">Got Lobang or not ah?</p>
     <button className="play-button" onClick={onPlay}>Play Today's Puzzle</button>
   </div>
 );
@@ -76,7 +76,7 @@ function App() {
     setSelectedWords([]);
     setMistakesLeft(4);
     setIsGameOver(false);
-    setMessage('Find four words that share something in common.');
+    setMessage('Eh bro, one lobang got 4 words.');
     try {
       const response = await axios.get(`${API_URL}/api/today`);
       setGridWords(shuffleArray([...response.data.words]));
@@ -175,12 +175,12 @@ const handleSubmit = async () => {
       case 'instructions':
         return <InstructionsModal onStartGame={handleStartGame} />;
       case 'playing':
-        if (isLoading) return <div className="loading-screen"><h1>GridConnect</h1><p>Loading...</p></div>;
+        if (isLoading) return <div className="loading-screen"><h1>LobangSG</h1><p>Loading...</p></div>;
         return (
           <>
             <header>
               <GameStats score={score} streak={streak} />
-              <h1>GridConnect</h1>
+              <h1>LobangSG</h1>
               <p>{message}</p>
             </header>
             <main>
