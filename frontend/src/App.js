@@ -143,7 +143,7 @@ const handleSubmit = async () => {
       if (solvedGroups.length + 1 === 4) {
         handleWin();
       } else {
-        setMessage("Steady bom pi pi!.");
+        setMessage("Steady bom pi pi.");
       }
     } else {
       const newMistakesLeft = mistakesLeft - 1;
