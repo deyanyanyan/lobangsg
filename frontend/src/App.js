@@ -143,7 +143,7 @@ const handleSubmit = async () => {
       if (solvedGroups.length + 1 === 4) {
         handleWin();
       } else {
-        setMessage("Correct! One group down.");
+        setMessage("Steady bom pi pi!.");
       }
     } else {
       const newMistakesLeft = mistakesLeft - 1;
@@ -153,10 +153,10 @@ const handleSubmit = async () => {
       setSelectedWords([]);
 
       if (newMistakesLeft === 0) {
-        setMessage("Game Over! Better luck tomorrow.");
+        setMessage("Aiyoh, game over lah.");
         setIsGameOver(true);
       } else {
-        setMessage("Not a group. Try again.");
+        setMessage("Wrong lah.");
       }
     }
   } catch (error) {
