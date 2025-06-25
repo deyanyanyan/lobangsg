@@ -12,7 +12,6 @@ const shuffleArray = (array) => {
   return array;
 };
 
-// --- UI Components ---
 const InstructionsModal = ({ onStartGame }) => (
   <div className="modal-overlay">
     <div className="modal-content">
@@ -39,21 +38,15 @@ const HomeScreen = ({ onPlay, score, streak }) => (
 
 const GameStats = ({ score, streak }) => (
   <div className="game-stats">
-    <div className="stat-item">
-      <span>SCORE</span>
-      <div>⭐ {score}</div>
-    </div>
-    <div className="stat-item">
-      <span>STREAK</span>
-      <div>🔥 {streak}</div>
-    </div>
+    <div className="stat-item"><span>SCORE</span><div>⭐ {score}</div></div>
+    <div className="stat-item"><span>STREAK</span><div>🔥 {streak}</div></div>
   </div>
 );
 
 function App() {
-  // --- STATE MANAGEMENT ---
   const [gameState, setGameState] = useState('home');
   const [gridWords, setGridWords] = useState([]);
+  const [groupLabels, setGroupLabels] = useState([]);
   const [solvedGroups, setSolvedGroups] = useState([]);
   const [selectedWords, setSelectedWords] = useState([]);
   const [mistakesLeft, setMistakesLeft] = useState(4);
@@ -63,30 +56,20 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
-  
-  // --- LOCALSTORAGE & PERSISTENCE ---
+
   useEffect(() => {
-    try {
-      const savedData = JSON.parse(localStorage.getItem('gridConnectData'));
-      if (savedData) {
-        setScore(savedData.score || 0);
-        setStreak(savedData.streak || 0);
-      }
-    } catch (error) {
-      console.error("Could not parse saved data.", error);
+    const savedData = JSON.parse(localStorage.getItem('gridConnectData'));
+    if (savedData) {
+      setScore(savedData.score || 0);
+      setStreak(savedData.streak || 0);
     }
   }, []);
 
   const saveData = (newScore, newStreak, lastPlayedDate) => {
-    try {
-      const dataToSave = { score: newScore, streak: newStreak, lastPlayed: lastPlayedDate };
-      localStorage.setItem('gridConnectData', JSON.stringify(dataToSave));
-    } catch (error) {
-      console.error("Could not save data.", error);
-    }
+    const dataToSave = { score: newScore, streak: newStreak, lastPlayed: lastPlayedDate };
+    localStorage.setItem('gridConnectData', JSON.stringify(dataToSave));
   };
 
-  // --- CORE GAME FUNCTIONS ---
   const fetchPuzzle = useCallback(async () => {
     setIsLoading(true);
     setSolvedGroups([]);
@@ -97,6 +80,7 @@ function App() {
     try {
       const response = await axios.get(`${API_URL}/api/today`);
       setGridWords(shuffleArray([...response.data.words]));
+      setGroupLabels(response.data.solution || []);
     } catch (error) {
       console.error("Error fetching puzzle:", error);
       setMessage('Error connecting to the server!');
@@ -111,29 +95,24 @@ function App() {
   };
 
   const calculatePoints = (mistakes) => {
-    if (mistakes === 4) return 20; // Perfect game
-    if (mistakes === 3) return 15;
-    if (mistakes === 2) return 10;
-    if (mistakes === 1) return 5;
-    return 0; // No bonus if all mistakes used
+    return [0, 5, 10, 15, 20][mistakes];
   };
 
   const handleWin = () => {
     const pointsEarned = 10 + calculatePoints(mistakesLeft);
     const newScore = score + pointsEarned;
-    setMessage(`You win! +${pointsEarned} points!`);
-    
     const today = new Date().toDateString();
     const savedData = JSON.parse(localStorage.getItem('gridConnectData')) || {};
     const lastPlayed = savedData.lastPlayed;
-    
+
     let newStreak = streak;
     if (lastPlayed !== today) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        newStreak = lastPlayed === yesterday.toDateString() ? streak + 1 : 1;
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      newStreak = lastPlayed === yesterday.toDateString() ? streak + 1 : 1;
     }
-    
+
+    setMessage(`You win! +${pointsEarned} points!`);
     setScore(newScore);
     setStreak(newStreak);
     saveData(newScore, newStreak, today);
@@ -142,11 +121,9 @@ function App() {
 
   const handleWordClick = (word) => {
     if (isGameOver) return;
-    if (selectedWords.includes(word)) {
-      setSelectedWords(prev => prev.filter(w => w !== word));
-    } else if (selectedWords.length < 4) {
-      setSelectedWords(prev => [...prev, word]);
-    }
+    setSelectedWords((prev) =>
+      prev.includes(word) ? prev.filter(w => w !== word) : [...prev, word]
+    );
   };
 
   const handleSubmit = async () => {
@@ -155,9 +132,16 @@ function App() {
       const response = await axios.post(`${API_URL}/api/check`, { selection: selectedWords });
       const { isCorrect, group } = response.data;
       if (isCorrect) {
-        setSolvedGroups(prev => [...prev, group]);
+        const labelIndex = groupLabels.findIndex((grp) =>
+          JSON.stringify([...group.words].sort()) === JSON.stringify([...grp.words].sort())
+        );
+        const groupLabel = groupLabels[solvedGroups.length] || group.name || `Group ${solvedGroups.length + 1}`;
+
+        const labeledGroup = { name: groupLabel, words: group.words };
+        setSolvedGroups(prev => [...prev, labeledGroup]);
         setGridWords(prev => prev.filter(w => !selectedWords.includes(w)));
         setSelectedWords([]);
+
         if (solvedGroups.length + 1 === 4) {
           handleWin();
         } else {
@@ -184,8 +168,7 @@ function App() {
   const handleDeselectAll = () => setSelectedWords([]);
   const handleShuffle = () => setGridWords(prev => shuffleArray([...prev]));
   const handlePlayAgain = () => setGameState('home');
-  
-  // --- MAIN RENDER LOGIC ---
+
   const renderContent = () => {
     switch (gameState) {
       case 'instructions':
@@ -200,10 +183,40 @@ function App() {
               <p>{message}</p>
             </header>
             <main>
-              <div className="solved-groups-container">{solvedGroups.map((group, index) => (<div key={group.name} className="solved-group" style={{ backgroundColor: `hsl(${index * 60 + 210}, 100%, 85%)` }}><strong>{group.name}</strong><p>{group.words.join(', ')}</p></div>))}</div>
-              <div className={`word-grid ${isShaking ? 'shake' : ''}`}>{gridWords.map(word => (<button key={word} className={`word-tile ${selectedWords.includes(word) ? 'selected' : ''}`} onClick={() => handleWordClick(word)} disabled={isGameOver}>{word}</button>))}</div>
-              <div className="mistakes-container"><span>Mistakes remaining:</span><div className="mistake-dots">{[...Array(4)].map((_, i) => (<span key={i} className={`dot ${i >= mistakesLeft ? 'lost' : ''}`}></span>))}</div></div>
-              {!isGameOver ? (<div className="action-buttons"><button onClick={handleShuffle}>Shuffle</button><button onClick={handleDeselectAll} disabled={selectedWords.length === 0}>Deselect All</button><button onClick={handleSubmit} disabled={selectedWords.length !== 4} className="submit-button">Submit</button></div>) : (<div className="action-buttons"><button onClick={handlePlayAgain}>Back to Home</button></div>)}
+              <div className="solved-groups-container">
+                {solvedGroups.map((group, index) => (
+                  <div key={group.name} className="solved-group" style={{ backgroundColor: `hsl(${index * 60 + 210}, 100%, 85%)` }}>
+                    <strong>{group.name}</strong>
+                    <p>{group.words.join(', ')}</p>
+                  </div>
+                ))}
+              </div>
+              <div className={`word-grid ${isShaking ? 'shake' : ''}`}>
+                {gridWords.map(word => (
+                  <button key={word} className={`word-tile ${selectedWords.includes(word) ? 'selected' : ''}`} onClick={() => handleWordClick(word)} disabled={isGameOver}>
+                    {word}
+                  </button>
+                ))}
+              </div>
+              <div className="mistakes-container">
+                <span>Mistakes remaining:</span>
+                <div className="mistake-dots">
+                  {[...Array(4)].map((_, i) => (
+                    <span key={i} className={`dot ${i >= mistakesLeft ? 'lost' : ''}`}></span>
+                  ))}
+                </div>
+              </div>
+              {!isGameOver ? (
+                <div className="action-buttons">
+                  <button onClick={handleShuffle}>Shuffle</button>
+                  <button onClick={handleDeselectAll} disabled={selectedWords.length === 0}>Deselect All</button>
+                  <button onClick={handleSubmit} disabled={selectedWords.length !== 4} className="submit-button">Submit</button>
+                </div>
+              ) : (
+                <div className="action-buttons">
+                  <button onClick={handlePlayAgain}>Back to Home</button>
+                </div>
+              )}
             </main>
           </>
         );
