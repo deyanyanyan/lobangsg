@@ -126,44 +126,45 @@ function App() {
     );
   };
 
-  const handleSubmit = async () => {
-    if (selectedWords.length !== 4) return;
-    try {
-      const response = await axios.post(`${API_URL}/api/check`, { selection: selectedWords });
-      const { isCorrect, group } = response.data;
-      if (isCorrect) {
-        const labelIndex = groupLabels.findIndex((grp) =>
-          JSON.stringify([...group.words].sort()) === JSON.stringify([...grp.words].sort())
-        );
-        const groupLabel = groupLabels[solvedGroups.length] || group.name || `Group ${solvedGroups.length + 1}`;
+const handleSubmit = async () => {
+  if (selectedWords.length !== 4) return;
 
-        const labeledGroup = { name: groupLabel, words: group.words };
-        setSolvedGroups(prev => [...prev, labeledGroup]);
-        setGridWords(prev => prev.filter(w => !selectedWords.includes(w)));
-        setSelectedWords([]);
+  try {
+    const response = await axios.post(`${API_URL}/api/check`, { selection: selectedWords });
+    const { isCorrect, group } = response.data;
 
-        if (solvedGroups.length + 1 === 4) {
-          handleWin();
-        } else {
-          setMessage("Correct! One group down.");
-        }
+    if (isCorrect && group?.words) {
+      const labeledGroup = group;
+
+      setSolvedGroups(prev => [...prev, labeledGroup]);
+      setGridWords(prev => prev.filter(w => !selectedWords.includes(w)));
+      setSelectedWords([]);
+
+      if (solvedGroups.length + 1 === 4) {
+        handleWin();
       } else {
-        const newMistakesLeft = mistakesLeft - 1;
-        setMistakesLeft(newMistakesLeft);
-        setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 500);
-        if (newMistakesLeft === 0) {
-          setMessage("Game Over! Better luck tomorrow.");
-          setIsGameOver(true);
-        } else {
-          setMessage("Not a group. Try again.");
-        }
+        setMessage("Correct! One group down.");
       }
-    } catch (error) {
-      console.error("Error checking submission:", error);
-      setMessage("Error submitting guess. Check the server.");
+    } else {
+      const newMistakesLeft = mistakesLeft - 1;
+      setMistakesLeft(newMistakesLeft);
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
+      setSelectedWords([]);
+
+      if (newMistakesLeft === 0) {
+        setMessage("Game Over! Better luck tomorrow.");
+        setIsGameOver(true);
+      } else {
+        setMessage("Not a group. Try again.");
+      }
     }
-  };
+  } catch (error) {
+    console.error("Error checking submission:", error);
+    setMessage("Error submitting guess. Check the server.");
+  }
+};
+
 
   const handleDeselectAll = () => setSelectedWords([]);
   const handleShuffle = () => setGridWords(prev => shuffleArray([...prev]));
