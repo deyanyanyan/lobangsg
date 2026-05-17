@@ -46,7 +46,6 @@ const GameStats = ({ score, streak }) => (
 function App() {
   const [gameState, setGameState] = useState('home');
   const [gridWords, setGridWords] = useState([]);
-  const [groupLabels, setGroupLabels] = useState([]);
   const [solvedGroups, setSolvedGroups] = useState([]);
   const [selectedWords, setSelectedWords] = useState([]);
   const [mistakesLeft, setMistakesLeft] = useState(4);
@@ -114,7 +113,6 @@ function App() {
     try {
       const response = await axios.get(`${API_URL}/api/today`);
       setGridWords(shuffleArray([...response.data.words]));
-      setGroupLabels(response.data.solution || []);
     } catch (error) {
       console.error("Error fetching puzzle:", error);
       setMessage('Error connecting to the server!');
